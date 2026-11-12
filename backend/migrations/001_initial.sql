@@ -1,0 +1,10 @@
+CREATE TABLE users(id TEXT PRIMARY KEY, full_name TEXT NOT NULL, email TEXT NOT NULL UNIQUE COLLATE NOCASE, password_hash TEXT NOT NULL, academic_level TEXT NOT NULL, specialty TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE TABLE subjects(id TEXT PRIMARY KEY, name TEXT NOT NULL UNIQUE);
+CREATE TABLE user_subjects(user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, subject_id TEXT NOT NULL REFERENCES subjects(id), PRIMARY KEY(user_id,subject_id));
+CREATE TABLE courses(id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, title TEXT NOT NULL, subject TEXT NOT NULL, description TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE INDEX courses_owner ON courses(user_id,updated_at);
+CREATE TABLE documents(id TEXT PRIMARY KEY, course_id TEXT NOT NULL REFERENCES courses(id) ON DELETE CASCADE, original_filename TEXT NOT NULL, stored_filename TEXT NOT NULL, storage_path TEXT NOT NULL, mime_type TEXT NOT NULL, size_bytes INTEGER NOT NULL, sha256 TEXT NOT NULL, status TEXT NOT NULL CHECK(status IN ('uploaded','processing','ready','failed')), page_count INTEGER, error_message TEXT, uploaded_at TEXT NOT NULL, updated_at TEXT NOT NULL, UNIQUE(course_id,sha256));
+CREATE INDEX documents_course ON documents(course_id);
+CREATE TABLE document_chunks(id TEXT PRIMARY KEY, document_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE, page_number INTEGER NOT NULL CHECK(page_number>0), chunk_index INTEGER NOT NULL, content TEXT NOT NULL, created_at TEXT NOT NULL, UNIQUE(document_id,page_number,chunk_index));
+CREATE INDEX chunks_document ON document_chunks(document_id);
+CREATE TABLE file_cleanup(stored_filename TEXT PRIMARY KEY);

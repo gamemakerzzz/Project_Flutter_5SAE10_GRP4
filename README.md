@@ -1,5 +1,11 @@
 # Smart Learning
 
+## Connected StudyMate backend
+
+For a fresh checkout, follow the [team integration guide](docs/courses_rag_integration.md). The [audit report](docs/courses_rag_audit_report.md) records tested behavior and remaining limitations.
+
+The Flutter app connects to a Dart Frog + SQLite backend for accounts, profiles, courses, PDF storage/extraction, semantic search and grounded RAG answers using local Ollama models. See [backend setup](backend/README.md) and the [Smart Courses and RAG guide](docs/courses_rag.md). Connected mode is the default; use `--dart-define=DEMO_MODE=true` explicitly for the in-memory demo, which has keyword search only.
+
 Flutter e-learning platform for the five-member 5SAE10 GRP4 team.
 
 ## Setup
@@ -22,7 +28,7 @@ flutter run
 - `docs/`: architecture and API agreements.
 - `template_reference/`: source reference from Hash Studios; independent legacy Flutter app, not imported by the main app.
 
-Feature folders contain models, data, screens, widgets, and view models. Add domain logic only when needed. Empty folders are tracked with `.gitkeep`; no feature implementation has been added. Existing generated Flutter code remains intact.
+Feature folders contain models, data, screens, widgets, and view models. Auth, profile and Smart Courses/RAG are implemented. The other learning modules remain placeholders.
 
 ## Team workflow
 
