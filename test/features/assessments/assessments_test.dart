@@ -2,8 +2,12 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:smart_learning/features/assessments/assessments_demo.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:smart_learning/features/assessments/data/ai_assessment_api.dart';
+import 'package:smart_learning/features/assessments/data/assessment_database.dart';
 import 'package:smart_learning/features/assessments/data/demo_question_repository.dart';
+import 'package:smart_learning/features/assessments/data/open_trivia_repository.dart';
 import 'package:smart_learning/features/assessments/models/assessment.dart';
 import 'package:smart_learning/features/assessments/presentation/screens/assessments_screen.dart';
 import 'package:smart_learning/features/assessments/presentation/view_models/assessment_view_model.dart';
@@ -42,10 +46,66 @@ void main() {
     },
   );
 
+  test('An attempt survives JSON serialization used by local SQFLite storage', () {
+    final question = Question(
+      id: 'stored-question',
+      prompt: 'Quel langage utilise Flutter ?',
+      kind: QuestionKind.multipleChoice,
+      options: const ['Dart', 'Java'],
+      correctIndex: 0,
+      expectedAnswer: 'Dart',
+      explanation: 'Flutter utilise Dart.',
+    );
+    final result = AssessmentResult(
+      id: 'attempt-1',
+      date: DateTime.utc(2026, 11, 12),
+      config: const AssessmentConfig(),
+      questions: [question],
+      answers: const {'stored-question': '0'},
+      elapsed: const Duration(seconds: 45),
+    );
+    final restored = AssessmentResult.fromJson(result.toJson());
+    expect(restored.id, result.id);
+    expect(restored.percentage, 100);
+    expect(restored.questions.single.options, question.options);
+    expect(restored.elapsed, result.elapsed);
+  });
+
+  test('Open Trivia DB questions are decoded into quiz questions', () async {
+    final client = MockClient((request) async {
+      expect(request.url.host, 'opentdb.com');
+      expect(request.url.queryParameters['category'], '18');
+      return http.Response('''
+        {"response_code":0,"results":[{
+          "question":"Which%20language%20does%20Flutter%20use%3F",
+          "correct_answer":"Dart",
+          "incorrect_answers":["Java","PHP","Swift"]
+        }]}
+      ''', 200);
+    });
+    final questions = await OpenTriviaRepository(client: client).loadQuestions(
+      const AssessmentConfig(mix: QuestionMix.multipleChoice, count: 1),
+    );
+    expect(questions.single.prompt, 'Which language does Flutter use?');
+    expect(questions.single.options, contains('Dart'));
+    expect(questions.single.isCorrect(questions.single.correctIndex.toString()), isTrue);
+  });
+
+  test('AI calls report missing local configuration without a network request', () async {
+    final api = AiAssessmentApi(
+      client: MockClient((request) => throw StateError('No request expected')),
+      config: const AiApiConfig(),
+    );
+    await expectLater(
+      api.generateFlutterQuestions(const AssessmentConfig()),
+      throwsA(isA<QuizApiException>()),
+    );
+  });
+
   test(
     'Correct answers score, blanks do not, and saved results are immutable',
     () {
-      final vm = AssessmentViewModel();
+      final vm = AssessmentViewModel(database: InMemoryAssessmentStore());
       addTearDown(vm.dispose);
       vm.start(
         const AssessmentConfig(mix: QuestionMix.multipleChoice, count: 3),
@@ -65,7 +125,7 @@ void main() {
   test(
     'Practice corrections lock answers but exam corrections remain hidden',
     () {
-      final vm = AssessmentViewModel();
+      final vm = AssessmentViewModel(database: InMemoryAssessmentStore());
       addTearDown(vm.dispose);
       vm.start(const AssessmentConfig(mix: QuestionMix.multipleChoice));
       final correct = vm.current.correctIndex.toString();
@@ -84,7 +144,10 @@ void main() {
     'Deadline submission catches delayed ticks and does not duplicate history',
     () {
       var now = DateTime(2026, 10, 14, 12);
-      final vm = AssessmentViewModel(now: () => now);
+      final vm = AssessmentViewModel(
+        database: InMemoryAssessmentStore(),
+        now: () => now,
+      );
       addTearDown(vm.dispose);
       vm.start(const AssessmentConfig(mode: AssessmentMode.exam, minutes: 1));
       now = now.add(const Duration(seconds: 75));
@@ -99,7 +162,10 @@ void main() {
 
   test('An answer arriving after the deadline is not accepted', () {
     var now = DateTime(2026, 10, 14);
-    final vm = AssessmentViewModel(now: () => now);
+    final vm = AssessmentViewModel(
+      database: InMemoryAssessmentStore(),
+      now: () => now,
+    );
     addTearDown(vm.dispose);
     vm.start(const AssessmentConfig(mode: AssessmentMode.exam, minutes: 1));
     now = now.add(const Duration(minutes: 1));
@@ -115,7 +181,9 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(const AssessmentsDemoApp());
+    final vm = AssessmentViewModel(database: InMemoryAssessmentStore());
+    addTearDown(vm.dispose);
+    await tester.pumpWidget(MaterialApp(home: AssessmentsScreen(viewModel: vm)));
     expect(find.text('Quiz & Examens'), findsOneWidget);
     await tester.tap(find.text('Historique'));
     await tester.pumpAndSettle();
@@ -126,7 +194,7 @@ void main() {
   testWidgets('Open answers survive navigation and results enter history', (
     tester,
   ) async {
-    final vm = AssessmentViewModel();
+    final vm = AssessmentViewModel(database: InMemoryAssessmentStore());
     addTearDown(vm.dispose);
     vm.start(const AssessmentConfig(mix: QuestionMix.open, count: 3));
     await tester.pumpWidget(
@@ -150,7 +218,10 @@ void main() {
     tester,
   ) async {
     var now = DateTime(2026, 10, 14);
-    final vm = AssessmentViewModel(now: () => now);
+    final vm = AssessmentViewModel(
+      database: InMemoryAssessmentStore(),
+      now: () => now,
+    );
     addTearDown(vm.dispose);
     vm.start(const AssessmentConfig(mode: AssessmentMode.exam, minutes: 1));
     await tester.pumpWidget(

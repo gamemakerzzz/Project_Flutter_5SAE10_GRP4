@@ -104,12 +104,21 @@ class _OpenAnswerFieldState extends State<OpenAnswerField> {
   }
 
   @override
-  Widget build(BuildContext context) => TextField(
+  Widget build(BuildContext context) => TextFormField(
     controller: controller,
     enabled: widget.enabled,
     minLines: 4,
     maxLines: 8,
     onChanged: widget.onChanged,
+    validator: (value) {
+      if (value == null || value.trim().isEmpty) {
+        return 'Saisissez une réponse avant de continuer.';
+      }
+      if (value.trim().length < 3) {
+        return 'La réponse doit contenir au moins 3 caractères.';
+      }
+      return null;
+    },
     decoration: const InputDecoration(
       labelText: 'Votre réponse',
       hintText: 'Expliquez votre raisonnement…',

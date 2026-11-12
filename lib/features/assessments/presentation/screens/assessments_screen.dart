@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/assessment.dart';
+import 'attempt_detail_screen.dart';
 import '../view_models/assessment_view_model.dart';
 import '../widgets/assessment_widgets.dart';
 
@@ -21,11 +22,15 @@ class _AssessmentsScreenState extends State<AssessmentsScreen>
   int count = 5;
   int minutes = 10;
   bool historyTab = false;
+  QuestionSource source = QuestionSource.local;
+  final _answerFormKey = GlobalKey<FormState>();
+  late final Future<void> _historyFuture;
 
   @override
   void initState() {
     super.initState();
     vm = widget.viewModel ?? AssessmentViewModel();
+    _historyFuture = vm.loadHistory();
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -166,7 +171,18 @@ class _AssessmentsScreenState extends State<AssessmentsScreen>
       ),
       const SizedBox(height: 20),
       if (historyTab)
-        _history()
+        FutureBuilder<void>(
+          future: _historyFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting && vm.history.isEmpty) {
+              return const Center(child: Padding(
+                padding: EdgeInsets.all(32),
+                child: CircularProgressIndicator(),
+              ));
+            }
+            return _history();
+          },
+        )
       else ...[
         AssessmentPanel(
           child: Column(
@@ -206,6 +222,26 @@ class _AssessmentsScreenState extends State<AssessmentsScreen>
                 (v) => '$v questions',
                 (v) => setState(() => count = v),
               ),
+              const SizedBox(height: 16),
+              _dropdown<QuestionSource>(
+                'Source des questions',
+                source,
+                QuestionSource.values,
+                (value) => switch (value) {
+                  QuestionSource.local => 'Démonstration locale Flutter/Dart',
+                  QuestionSource.openTrivia => 'Open Trivia DB · API HTTP',
+                  QuestionSource.gemini => 'Gemini · IA HTTP',
+                },
+                (value) => setState(() => source = value),
+              ),
+              if (source == QuestionSource.openTrivia) ...[
+                const SizedBox(height: 8),
+                const Text('Cette source propose des QCM informatiques en anglais. Les questions ouvertes restent disponibles avec la source locale ou Gemini.', style: TextStyle(fontSize: 12)),
+              ],
+              if (source == QuestionSource.gemini) ...[
+                const SizedBox(height: 8),
+                const Text('Requiert une clé locale : --dart-define=GEMINI_API_KEY=…', style: TextStyle(fontSize: 12)),
+              ],
               const SizedBox(height: 24),
               Wrap(
                 spacing: 12,
@@ -247,9 +283,9 @@ class _AssessmentsScreenState extends State<AssessmentsScreen>
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  onPressed: () {
+                  onPressed: vm.loading ? null : () {
                     FocusScope.of(context).unfocus();
-                    vm.start(
+                    vm.startFromSource(
                       AssessmentConfig(
                         difficulty: difficulty,
                         mix: mix,
@@ -257,18 +293,25 @@ class _AssessmentsScreenState extends State<AssessmentsScreen>
                         count: count,
                         minutes: minutes,
                       ),
+                      source,
                     );
                   },
-                  icon: const Icon(Icons.auto_awesome),
-                  label: const Padding(
+                  icon: vm.loading
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.auto_awesome),
+                  label: Padding(
                     padding: EdgeInsets.symmetric(vertical: 14),
-                    child: Text('Générer une session démo'),
+                    child: Text(vm.loading ? 'Chargement…' : 'Générer une session'),
                   ),
                 ),
               ),
             ],
           ),
         ),
+        if (vm.loadError != null) ...[
+          const SizedBox(height: 12),
+          Text(vm.loadError!, style: TextStyle(color: Colors.red.shade700)),
+        ],
         const SizedBox(height: 16),
         const Text(
           'Prototype d’interface : questions préécrites, correction simulée et historique conservé uniquement pendant cette ouverture du module.',
@@ -305,7 +348,9 @@ class _AssessmentsScreenState extends State<AssessmentsScreen>
     final answer = vm.answers[q.id] ?? '';
     final revealed = vm.revealed.contains(q.id);
     final exam = vm.config.mode == AssessmentMode.exam;
-    return Column(
+    return Form(
+      key: _answerFormKey,
+      child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AssessmentPanel(
@@ -447,7 +492,9 @@ class _AssessmentsScreenState extends State<AssessmentsScreen>
               if (!exam && !revealed) ...[
                 const SizedBox(height: 18),
                 FilledButton.tonalIcon(
-                  onPressed: answer.trim().isEmpty ? null : vm.reveal,
+                  onPressed: answer.trim().isEmpty ? null : () {
+                    if (_answerFormKey.currentState?.validate() ?? false) vm.reveal();
+                  },
                   icon: const Icon(Icons.fact_check_outlined),
                   label: const Text('Vérifier ma réponse'),
                 ),
@@ -455,6 +502,35 @@ class _AssessmentsScreenState extends State<AssessmentsScreen>
               if (revealed) ...[
                 const SizedBox(height: 18),
                 _feedback(q, answer),
+                if (q.kind == QuestionKind.open) ...[
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: vm.correcting ? null : vm.requestAiCorrection,
+                    icon: vm.correcting
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.auto_awesome_outlined),
+                    label: Text(
+                      vm.correcting
+                          ? 'Correction IA…'
+                          : 'Obtenir une correction OpenAI',
+                    ),
+                  ),
+                  if (vm.aiFeedback[q.id] case final feedback?) ...[
+                    const SizedBox(height: 8),
+                    Text(feedback, style: const TextStyle(height: 1.5)),
+                  ],
+                  if (vm.loadError != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      vm.loadError!,
+                      style: TextStyle(color: Colors.red.shade700),
+                    ),
+                  ],
+                ],
               ],
             ],
           ),
@@ -487,6 +563,7 @@ class _AssessmentsScreenState extends State<AssessmentsScreen>
           ],
         ),
       ],
+      ),
     );
   }
 
@@ -652,7 +729,12 @@ class _AssessmentsScreenState extends State<AssessmentsScreen>
               ),
               isThreeLine: true,
               trailing: const Icon(Icons.chevron_right),
-              onTap: () => vm.showResult(result),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute<void>(
+                  builder: (context) => AttemptDetailScreen(result: result),
+                ),
+              ),
             ),
           ),
         ),

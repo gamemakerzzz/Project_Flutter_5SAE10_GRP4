@@ -44,6 +44,10 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Local API keys and personal editor launch settings
+/api_keys.json
+/.vscode/launch.json
+
 # Widget Preview related
 .widget_preview/
 
