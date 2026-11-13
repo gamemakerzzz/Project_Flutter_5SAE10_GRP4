@@ -22,7 +22,7 @@ flutter run
 - `docs/`: architecture and API agreements.
 - `template_reference/`: source reference from Hash Studios; independent legacy Flutter app, not imported by the main app.
 
-Feature folders contain models, data, screens, widgets, and view models. Add domain logic only when needed. Empty folders are tracked with `.gitkeep`; no feature implementation has been added. Existing generated Flutter code remains intact.
+Feature folders contain models, data, screens, widgets, and view models. Add domain logic only when needed. Empty folders are tracked with `.gitkeep`. The flashcards feature is implemented; the application entry point opens its workspace.
 
 ## Team workflow
 
@@ -53,3 +53,7 @@ The reference app has its own legacy dependencies. Run checks from the project r
 Reference: https://github.com/Hash-Studios/e-learning-app
 
 Copyright (c) 2020 Hash Studios. The reference source retains its BSD 3-Clause license at `template_reference/LICENSE.txt`. Preserve the applicable notices when copying code into this application. The reference project's original Dart constraint excludes Dart 3, so copied code and dependencies need adaptation.
+
+## Flashcards module
+
+AI Flashcards & Spaced Repetition is implemented. See [setup, API and test instructions](docs/flashcards.md). Start the Python PDF/AI service and run Flutter web on port 8080. Upload a PDF to generate flashcards with Claude Sonnet 5.5. Set ANTHROPIC_API_KEY in backend/.env; cards and review progress are stored with SQFlite (including its browser SQLite adapter). An example deck allows review testing without a key.

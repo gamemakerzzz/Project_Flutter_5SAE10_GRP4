@@ -54,3 +54,11 @@ app.*.map.json
 *.jks
 *.keystore
 
+
+# Local flashcards service
+.env
+backend/.env
+.venv/
+__pycache__/
+*.pyc
+*.log
