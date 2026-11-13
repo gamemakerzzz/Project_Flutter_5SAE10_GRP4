@@ -94,6 +94,8 @@ class _StudentShellState extends State<StudentShell> {
                 student: widget.session.student!,
                 onProfile: () => setState(() => tab = 5),
                 onCourses: () => setState(() => tab = 1),
+                onQuiz: () => setState(() => tab = 2),
+                onFlashcards: () => setState(() => tab = 3),
                 savedCourses: courses.courses,
               ),
             ),

@@ -9,7 +9,7 @@ class CourseModeBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) => DemoNote(
     text: local
-        ? 'Local workspace · PDFs stay in memory until logout or app restart. Text search is real; semantic search and AI generation need the backend.'
+        ? 'Local workspace · Courses and PDFs are saved on this device. AI questions send selected course passages to Claude through the local service.'
         : 'Connected workspace · Results come from your course server.',
   );
 }

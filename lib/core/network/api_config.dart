@@ -9,15 +9,17 @@ abstract final class ApiConfig {
     ),
   );
   static void validate(Uri uri) {
-    final localDebug =
-        kDebugMode &&
-        uri.scheme == 'http' &&
-        const ['10.0.2.2', '127.0.0.1', 'localhost'].contains(uri.host);
-    if ((!localDebug && uri.scheme != 'https') ||
+    const usbBackend = bool.fromEnvironment('USB_LOCAL_BACKEND');
+    const wifiHost = String.fromEnvironment('WIFI_BACKEND_HOST');
+    final localHttp = uri.scheme == 'http' &&
+        ((kDebugMode && const ['10.0.2.2', '127.0.0.1', 'localhost'].contains(uri.host)) ||
+         (usbBackend && const ['127.0.0.1', 'localhost'].contains(uri.host)) ||
+         (wifiHost.isNotEmpty && uri.host == wifiHost));
+    if ((!localHttp && uri.scheme != 'https') ||
         uri.host.isEmpty ||
         uri.userInfo.isNotEmpty) {
       throw const FormatException(
-        'Configure an HTTPS API_BASE_URL. Local HTTP is supported only in debug mode.',
+        'Configure an HTTPS API_BASE_URL, or use a local development build.',
       );
     }
   }

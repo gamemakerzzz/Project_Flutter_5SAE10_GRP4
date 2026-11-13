@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:http/http.dart' as http;
+import '../../../core/network/learning_ai_client.dart';
 
 import 'flashcard_database.dart';
 
@@ -11,10 +11,6 @@ class FlashcardRepository {
   FlashcardRepository({FlashcardDatabase? database})
     : _database = database ?? FlashcardDatabase.instance;
   final FlashcardDatabase _database;
-  static const api = String.fromEnvironment(
-    'FLASHCARDS_API_URL',
-    defaultValue: 'http://127.0.0.1:8081',
-  );
   Future<List<Deck>> load() => _database.load();
   Future<void> save(List<Deck> decks) => _database.save(decks);
 
@@ -22,20 +18,10 @@ class FlashcardRepository {
     String question,
     String answer,
   ) async {
-    final response = await http
-        .post(
-          Uri.parse('$api/api/flashcards/explain'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'question': question, 'answer': answer}),
-        )
-        .timeout(const Duration(seconds: 180));
-    final payload =
-        jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
-    if (response.statusCode != 200) {
-      throw Exception(
-        payload['error'] ?? 'Impossible de générer une explication.',
-      );
-    }
+    final payload = await LearningAiClient.post('/api/flashcards/explain', {
+      'question': question,
+      'answer': answer,
+    });
     return (
       explanation: payload['explanation'] as String,
       example: payload['example'] as String,
@@ -52,23 +38,12 @@ class FlashcardRepository {
     if (bytes.length > 10 * 1024 * 1024) {
       throw Exception('Le PDF doit faire moins de 10 Mo.');
     }
-    final response = await http
-        .post(
-          Uri.parse('$api/api/flashcards/generate'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({
-            'pdf': base64Encode(bytes),
-            'filename': filename,
-            'count': count,
-            'mode': 'ai',
-          }),
-        )
-        .timeout(const Duration(seconds: 180));
-    final payload =
-        jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
-    if (response.statusCode != 200) {
-      throw Exception(payload['error'] ?? 'Erreur de génération.');
-    }
+    final payload = await LearningAiClient.post('/api/flashcards/generate', {
+      'pdf': base64Encode(bytes),
+      'filename': filename,
+      'count': count,
+      'mode': 'ai',
+    });
     final id = DateTime.now().microsecondsSinceEpoch.toString();
     final rows = payload['cards'] as List;
     if (rows.isEmpty) throw Exception('Aucune carte générée.');

@@ -46,30 +46,33 @@ void main() {
     },
   );
 
-  test('An attempt survives JSON serialization used by local SQFLite storage', () {
-    final question = Question(
-      id: 'stored-question',
-      prompt: 'Quel langage utilise Flutter ?',
-      kind: QuestionKind.multipleChoice,
-      options: const ['Dart', 'Java'],
-      correctIndex: 0,
-      expectedAnswer: 'Dart',
-      explanation: 'Flutter utilise Dart.',
-    );
-    final result = AssessmentResult(
-      id: 'attempt-1',
-      date: DateTime.utc(2026, 11, 12),
-      config: const AssessmentConfig(),
-      questions: [question],
-      answers: const {'stored-question': '0'},
-      elapsed: const Duration(seconds: 45),
-    );
-    final restored = AssessmentResult.fromJson(result.toJson());
-    expect(restored.id, result.id);
-    expect(restored.percentage, 100);
-    expect(restored.questions.single.options, question.options);
-    expect(restored.elapsed, result.elapsed);
-  });
+  test(
+    'An attempt survives JSON serialization used by local SQFLite storage',
+    () {
+      final question = Question(
+        id: 'stored-question',
+        prompt: 'Quel langage utilise Flutter ?',
+        kind: QuestionKind.multipleChoice,
+        options: const ['Dart', 'Java'],
+        correctIndex: 0,
+        expectedAnswer: 'Dart',
+        explanation: 'Flutter utilise Dart.',
+      );
+      final result = AssessmentResult(
+        id: 'attempt-1',
+        date: DateTime.utc(2026, 11, 12),
+        config: const AssessmentConfig(),
+        questions: [question],
+        answers: const {'stored-question': '0'},
+        elapsed: const Duration(seconds: 45),
+      );
+      final restored = AssessmentResult.fromJson(result.toJson());
+      expect(restored.id, result.id);
+      expect(restored.percentage, 100);
+      expect(restored.questions.single.options, question.options);
+      expect(restored.elapsed, result.elapsed);
+    },
+  );
 
   test('Open Trivia DB questions are decoded into quiz questions', () async {
     final client = MockClient((request) async {
@@ -88,17 +91,35 @@ void main() {
     );
     expect(questions.single.prompt, 'Which language does Flutter use?');
     expect(questions.single.options, contains('Dart'));
-    expect(questions.single.isCorrect(questions.single.correctIndex.toString()), isTrue);
+    expect(
+      questions.single.isCorrect(questions.single.correctIndex.toString()),
+      isTrue,
+    );
   });
 
-  test('AI calls report missing local configuration without a network request', () async {
+  test('AI requests use the server and preserve provider errors', () async {
     final api = AiAssessmentApi(
-      client: MockClient((request) => throw StateError('No request expected')),
-      config: const AiApiConfig(),
+      post: (path, body) async {
+        expect(path, '/api/quiz/generate');
+        expect(body['courseContext'], 'Course evidence');
+        expect(body.containsKey('GEMINI_API_KEY'), isFalse);
+        throw const FormatException('Gemini: quota exceeded');
+      },
     );
     await expectLater(
-      api.generateFlutterQuestions(const AssessmentConfig()),
-      throwsA(isA<QuizApiException>()),
+      api.generateCourseQuestions(
+        const AssessmentConfig(
+          courseTitle: 'Flutter',
+          courseContext: 'Course evidence',
+        ),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (e) => e.message,
+          'message',
+          contains('quota'),
+        ),
+      ),
     );
   });
 
@@ -183,7 +204,9 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     final vm = AssessmentViewModel(database: InMemoryAssessmentStore());
     addTearDown(vm.dispose);
-    await tester.pumpWidget(MaterialApp(home: AssessmentsScreen(viewModel: vm)));
+    await tester.pumpWidget(
+      MaterialApp(home: AssessmentsScreen(viewModel: vm)),
+    );
     expect(find.text('Quiz & Examens'), findsOneWidget);
     await tester.tap(find.text('Historique'));
     await tester.pumpAndSettle();

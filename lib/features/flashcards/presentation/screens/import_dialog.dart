@@ -25,14 +25,14 @@ class _ImportDialogState extends State<ImportDialog> {
 
   Future<void> pick() async {
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final chosen = await FilePicker.pickFile(
         type: FileType.custom,
         allowedExtensions: ['pdf'],
-        withData: true,
       );
-      if (result == null || !mounted) return;
-      final chosen = result.files.single;
-      if (chosen.size > 10 * 1024 * 1024) {
+      if (chosen == null || !mounted) return;
+      final size = await chosen.length();
+      if (!mounted) return;
+      if (size == null || size > 10 * 1024 * 1024) {
         setState(() => error = 'Le PDF doit faire moins de 10 Mo.');
         return;
       }
@@ -53,7 +53,7 @@ class _ImportDialogState extends State<ImportDialog> {
   }
 
   Future<void> generate() async {
-    if (file?.bytes == null || title.text.trim().isEmpty) {
+    if (file == null || title.text.trim().isEmpty) {
       setState(() => error = 'Choisissez un PDF et donnez un titre au paquet.');
       return;
     }
@@ -63,7 +63,7 @@ class _ImportDialogState extends State<ImportDialog> {
     });
     try {
       final deck = await widget.repo.generate(
-        bytes: file!.bytes!,
+        bytes: await file!.readAsBytes(),
         filename: file!.name,
         title: title.text.trim(),
         count: count,
@@ -73,7 +73,7 @@ class _ImportDialogState extends State<ImportDialog> {
       if (mounted) {
         setState(() {
           busy = false;
-          error = e.toString().replaceFirst('Exception: ', '');
+          error = e is FormatException ? e.message : e.toString().replaceFirst('Exception: ', '');
         });
       }
     }

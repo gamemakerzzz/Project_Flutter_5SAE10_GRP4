@@ -9,9 +9,15 @@ import '../widgets/assessment_widgets.dart';
 
 /// Feature entry point. Can be pushed as a route from the shared dashboard.
 class AssessmentsScreen extends StatefulWidget {
-  const AssessmentsScreen({super.key, this.viewModel, this.coursesModel, this.embedded = false});
+  const AssessmentsScreen({
+    super.key,
+    this.viewModel,
+    this.coursesModel,
+    this.embedded = false,
+  });
   final AssessmentViewModel? viewModel;
   final CoursesViewModel? coursesModel;
+
   /// Removes the feature app bar when displayed inside the shared tab shell.
   final bool embedded;
   @override
@@ -102,16 +108,29 @@ class _AssessmentsScreenState extends State<AssessmentsScreen>
     final course = selectedCourse;
     final courses = widget.coursesModel;
     if (course == null || courses == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Choisissez d’abord un cours.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Choisissez d’abord un cours.')),
+      );
       return;
     }
     final passages = await courses.quizSources(course.id);
     if (!mounted) return;
     if (passages.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Importez et traitez un PDF, ou ajoutez une description au cours avant de générer le quiz.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Importez et traitez un PDF, ou ajoutez une description au cours avant de générer le quiz.',
+          ),
+        ),
+      );
       return;
     }
-    final contextText = passages.map((passage) => '[${passage.documentName}, page ${passage.page}] ${passage.excerpt}').join('\n\n');
+    final contextText = passages
+        .map(
+          (passage) =>
+              '[${passage.documentName}, page ${passage.page}] ${passage.excerpt}',
+        )
+        .join('\n\n');
     FocusScope.of(context).unfocus();
     await vm.startFromSource(
       AssessmentConfig(
@@ -122,7 +141,9 @@ class _AssessmentsScreenState extends State<AssessmentsScreen>
         minutes: minutes,
         courseId: course.id,
         courseTitle: course.title,
-        courseContext: contextText.length > 18000 ? contextText.substring(0, 18000) : contextText,
+        courseContext: contextText.length > 18000
+            ? contextText.substring(0, 18000)
+            : contextText,
       ),
       source,
     );
@@ -138,29 +159,31 @@ class _AssessmentsScreenState extends State<AssessmentsScreen>
       },
       child: Scaffold(
         backgroundColor: assessmentBackground,
-        appBar: widget.embedded ? null : AppBar(
-          backgroundColor: assessmentBackground,
-          leading: vm.stage == AssessmentStage.setup
-              ? null
-              : IconButton(
-                  tooltip: 'Retour à la configuration',
-                  onPressed: _leave,
-                  icon: const Icon(Icons.arrow_back),
+        appBar: widget.embedded
+            ? null
+            : AppBar(
+                backgroundColor: assessmentBackground,
+                leading: vm.stage == AssessmentStage.setup
+                    ? null
+                    : IconButton(
+                        tooltip: 'Retour à la configuration',
+                        onPressed: _leave,
+                        icon: const Icon(Icons.arrow_back),
+                      ),
+                title: const Text(
+                  'Quiz & Examens',
+                  style: TextStyle(fontWeight: FontWeight.w800),
                 ),
-          title: const Text(
-            'Quiz & Examens',
-            style: TextStyle(fontWeight: FontWeight.w800),
-          ),
-          actions: const [
-            Padding(
-              padding: EdgeInsets.only(right: 16),
-              child: Chip(
-                label: Text('DÉMO'),
-                avatar: Icon(Icons.science_outlined, size: 16),
+                actions: const [
+                  Padding(
+                    padding: EdgeInsets.only(right: 16),
+                    child: Chip(
+                      label: Text('DÉMO'),
+                      avatar: Icon(Icons.science_outlined, size: 16),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
         body: SafeArea(
           child: Align(
             alignment: Alignment.topCenter,
@@ -210,11 +233,14 @@ class _AssessmentsScreenState extends State<AssessmentsScreen>
         FutureBuilder<void>(
           future: _historyFuture,
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting && vm.history.isEmpty) {
-              return const Center(child: Padding(
-                padding: EdgeInsets.all(32),
-                child: CircularProgressIndicator(),
-              ));
+            if (snapshot.connectionState == ConnectionState.waiting &&
+                vm.history.isEmpty) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32),
+                  child: CircularProgressIndicator(),
+                ),
+              );
             }
             return _history();
           },
@@ -229,27 +255,47 @@ class _AssessmentsScreenState extends State<AssessmentsScreen>
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 8),
-              const Text('Créez un quiz à partir d’un cours enregistré dans l’application.'),
+              const Text(
+                'Créez un quiz à partir d’un cours enregistré dans l’application.',
+              ),
               const SizedBox(height: 24),
               ListenableBuilder(
                 listenable: widget.coursesModel ?? _NoopListenable(),
                 builder: (context, _) {
-                  final courses = widget.coursesModel?.courses ?? const <Course>[];
-                  if (selectedCourse != null && !courses.any((course) => course.id == selectedCourse!.id)) {
+                  final courses =
+                      widget.coursesModel?.courses ?? const <Course>[];
+                  if (selectedCourse != null &&
+                      !courses.any(
+                        (course) => course.id == selectedCourse!.id,
+                      )) {
                     selectedCourse = null;
                   }
                   return DropdownButtonFormField<Course>(
                     value: selectedCourse,
                     isExpanded: true,
-                    decoration: const InputDecoration(labelText: 'Cours source', border: OutlineInputBorder()),
+                    decoration: const InputDecoration(
+                      labelText: 'Cours source',
+                      border: OutlineInputBorder(),
+                    ),
                     hint: const Text('Choisissez un cours importé'),
-                    items: [for (final course in courses) DropdownMenuItem(value: course, child: Text(course.title))],
-                    onChanged: courses.isEmpty ? null : (course) => setState(() => selectedCourse = course),
+                    items: [
+                      for (final course in courses)
+                        DropdownMenuItem(
+                          value: course,
+                          child: Text(course.title),
+                        ),
+                    ],
+                    onChanged: courses.isEmpty
+                        ? null
+                        : (course) => setState(() => selectedCourse = course),
                   );
                 },
               ),
               const SizedBox(height: 8),
-              const Text('Le quiz utilisera les passages PDF traités localement pour ce cours.', style: TextStyle(fontSize: 12)),
+              const Text(
+                'Le quiz utilisera les passages PDF traités localement pour ce cours.',
+                style: TextStyle(fontSize: 12),
+              ),
               const SizedBox(height: 16),
               _dropdown<Difficulty>(
                 'Difficulté',
@@ -284,20 +330,33 @@ class _AssessmentsScreenState extends State<AssessmentsScreen>
                 source,
                 QuestionSource.values,
                 (value) => switch (value) {
-                  QuestionSource.local => 'Démonstration locale (hors contenu du cours)',
-                  QuestionSource.openTrivia => 'Open Trivia DB · API HTTP (hors contenu du cours)',
-                  QuestionSource.gemini => 'Gemini · IA depuis le cours sélectionné',
+                  QuestionSource.local =>
+                    'Démonstration locale (hors contenu du cours)',
+                  QuestionSource.openTrivia =>
+                    'Open Trivia DB · API HTTP (hors contenu du cours)',
+                  QuestionSource.gemini =>
+                    'Gemini · IA depuis le cours sélectionné',
                 },
                 (value) => setState(() => source = value),
               ),
               if (source == QuestionSource.openTrivia) ...[
                 const SizedBox(height: 8),
-                const Text('Cette source propose des QCM informatiques en anglais. Les questions ouvertes restent disponibles avec la source locale ou Gemini.', style: TextStyle(fontSize: 12)),
+                const Text(
+                  'Cette source propose des QCM informatiques en anglais. Les questions ouvertes restent disponibles avec la source locale ou Gemini.',
+                  style: TextStyle(fontSize: 12),
+                ),
               ],
               if (source == QuestionSource.gemini) ...[
                 const SizedBox(height: 8),
-                const Text('Requiert une clé locale : --dart-define=GEMINI_API_KEY=…', style: TextStyle(fontSize: 12)),
+                const Text(
+                  'Gemini génère les questions depuis votre cours via le service IA.',
+                  style: TextStyle(fontSize: 12),
+                ),
               ],
+              const SizedBox(height: 12),
+              const Text(
+                'Correction Claude : en entraînement, répondez à une question ouverte puis choisissez Vérifier ma réponse et Obtenir une correction Claude.',
+              ),
               const SizedBox(height: 24),
               Wrap(
                 spacing: 12,
@@ -341,11 +400,17 @@ class _AssessmentsScreenState extends State<AssessmentsScreen>
                 child: FilledButton.icon(
                   onPressed: vm.loading ? null : _generate,
                   icon: vm.loading
-                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.auto_awesome),
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.auto_awesome),
                   label: Padding(
                     padding: EdgeInsets.symmetric(vertical: 14),
-                    child: Text(vm.loading ? 'Chargement…' : 'Générer une session'),
+                    child: Text(
+                      vm.loading ? 'Chargement…' : 'Générer une session',
+                    ),
                   ),
                 ),
               ),
@@ -395,218 +460,223 @@ class _AssessmentsScreenState extends State<AssessmentsScreen>
     return Form(
       key: _answerFormKey,
       child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        AssessmentPanel(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Wrap(
-                spacing: 16,
-                runSpacing: 8,
-                alignment: WrapAlignment.spaceBetween,
-                children: [
-                  Text(
-                    exam ? 'SIMULATION D’EXAMEN' : 'ENTRAÎNEMENT',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      color: assessmentBlue,
-                    ),
-                  ),
-                  Chip(
-                    avatar: const Icon(Icons.timer_outlined, size: 18),
-                    label: Text(
-                      '${exam ? 'Restant' : 'Écoulé'} ${clockLabel(exam ? vm.remaining : vm.elapsed)}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: exam && vm.remaining.inSeconds < 60
-                            ? Colors.red.shade700
-                            : null,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AssessmentPanel(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 16,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      exam ? 'SIMULATION D’EXAMEN' : 'ENTRAÎNEMENT',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        color: assessmentBlue,
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              LinearProgressIndicator(
-                value: vm.answered / vm.questions.length,
-                minHeight: 7,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                '${vm.answered}/${vm.questions.length} réponses · ${vm.config.difficulty.label}',
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (var i = 0; i < vm.questions.length; i++)
-              ChoiceChip(
-                label: Text('${i + 1}'),
-                selected: i == vm.index,
-                avatar: (vm.answers[vm.questions[i].id] ?? '').trim().isNotEmpty
-                    ? const Icon(Icons.check, size: 14)
-                    : null,
-                onSelected: (_) {
-                  FocusScope.of(context).unfocus();
-                  vm.goTo(i);
-                },
-              ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        AssessmentPanel(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'QUESTION ${vm.index + 1} / ${vm.questions.length} · ${q.kind == QuestionKind.open ? 'OUVERTE' : 'QCM'}',
-                style: const TextStyle(
-                  color: assessmentBlue,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 18),
-              Text(
-                q.prompt,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 24),
-              if (q.kind == QuestionKind.multipleChoice) ...[
-                for (var i = 0; i < q.options.length; i++)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: answer == '$i'
-                            ? const Color(0xFFE8F4FF)
-                            : Colors.white,
-                        foregroundColor: const Color(0xFF23334D),
-                        side: BorderSide(
-                          color: answer == '$i'
-                              ? assessmentBlue
-                              : const Color(0xFFDDE4EE),
-                        ),
-                        padding: const EdgeInsets.all(16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                    Chip(
+                      avatar: const Icon(Icons.timer_outlined, size: 18),
+                      label: Text(
+                        '${exam ? 'Restant' : 'Écoulé'} ${clockLabel(exam ? vm.remaining : vm.elapsed)}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: exam && vm.remaining.inSeconds < 60
+                              ? Colors.red.shade700
+                              : null,
                         ),
                       ),
-                      onPressed: revealed ? null : () => vm.answer('$i'),
-                      child: Row(
-                        children: [
-                          Icon(
-                            answer == '$i'
-                                ? Icons.radio_button_checked
-                                : Icons.radio_button_off,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              q.options[i],
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
-                  ),
-              ] else ...[
-                OpenAnswerField(
-                  key: ValueKey(q.id),
-                  answer: answer,
-                  enabled: !revealed,
-                  onChanged: vm.answer,
+                  ],
                 ),
                 const SizedBox(height: 10),
-                const Text(
-                  'Démo : la correction compare des mots-clés. Elle ne représente pas une évaluation pédagogique par IA.',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF526078)),
+                LinearProgressIndicator(
+                  value: vm.answered / vm.questions.length,
+                  minHeight: 7,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  '${vm.answered}/${vm.questions.length} réponses · ${vm.config.difficulty.label}',
                 ),
               ],
-              if (!exam && !revealed) ...[
-                const SizedBox(height: 18),
-                FilledButton.tonalIcon(
-                  onPressed: answer.trim().isEmpty ? null : () {
-                    if (_answerFormKey.currentState?.validate() ?? false) vm.reveal();
+            ),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (var i = 0; i < vm.questions.length; i++)
+                ChoiceChip(
+                  label: Text('${i + 1}'),
+                  selected: i == vm.index,
+                  avatar:
+                      (vm.answers[vm.questions[i].id] ?? '').trim().isNotEmpty
+                      ? const Icon(Icons.check, size: 14)
+                      : null,
+                  onSelected: (_) {
+                    FocusScope.of(context).unfocus();
+                    vm.goTo(i);
                   },
-                  icon: const Icon(Icons.fact_check_outlined),
-                  label: const Text('Vérifier ma réponse'),
                 ),
-              ],
-              if (revealed) ...[
-                const SizedBox(height: 18),
-                _feedback(q, answer),
-                if (q.kind == QuestionKind.open) ...[
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: vm.correcting ? null : vm.requestAiCorrection,
-                    icon: vm.correcting
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.auto_awesome_outlined),
-                    label: Text(
-                      vm.correcting
-                          ? 'Correction IA…'
-                          : 'Obtenir une correction OpenAI',
-                    ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          AssessmentPanel(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'QUESTION ${vm.index + 1} / ${vm.questions.length} · ${q.kind == QuestionKind.open ? 'OUVERTE' : 'QCM'}',
+                  style: const TextStyle(
+                    color: assessmentBlue,
+                    fontWeight: FontWeight.w700,
                   ),
-                  if (vm.aiFeedback[q.id] case final feedback?) ...[
-                    const SizedBox(height: 8),
-                    Text(feedback, style: const TextStyle(height: 1.5)),
-                  ],
-                  if (vm.loadError != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      vm.loadError!,
-                      style: TextStyle(color: Colors.red.shade700),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  q.prompt,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                if (q.kind == QuestionKind.multipleChoice) ...[
+                  for (var i = 0; i < q.options.length; i++)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: answer == '$i'
+                              ? const Color(0xFFE8F4FF)
+                              : Colors.white,
+                          foregroundColor: const Color(0xFF23334D),
+                          side: BorderSide(
+                            color: answer == '$i'
+                                ? assessmentBlue
+                                : const Color(0xFFDDE4EE),
+                          ),
+                          padding: const EdgeInsets.all(16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        onPressed: revealed ? null : () => vm.answer('$i'),
+                        child: Row(
+                          children: [
+                            Icon(
+                              answer == '$i'
+                                  ? Icons.radio_button_checked
+                                  : Icons.radio_button_off,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                q.options[i],
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
+                ] else ...[
+                  OpenAnswerField(
+                    key: ValueKey(q.id),
+                    answer: answer,
+                    enabled: !revealed,
+                    onChanged: vm.answer,
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Démo : la correction compare des mots-clés. Elle ne représente pas une évaluation pédagogique par IA.',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF526078)),
+                  ),
+                ],
+                if (!exam && !revealed) ...[
+                  const SizedBox(height: 18),
+                  FilledButton.tonalIcon(
+                    onPressed: answer.trim().isEmpty
+                        ? null
+                        : () {
+                            if (_answerFormKey.currentState?.validate() ??
+                                false)
+                              vm.reveal();
+                          },
+                    icon: const Icon(Icons.fact_check_outlined),
+                    label: const Text('Vérifier ma réponse'),
+                  ),
+                ],
+                if (revealed) ...[
+                  const SizedBox(height: 18),
+                  _feedback(q, answer),
+                  if (q.kind == QuestionKind.open) ...[
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed: vm.correcting ? null : vm.requestAiCorrection,
+                      icon: vm.correcting
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.auto_awesome_outlined),
+                      label: Text(
+                        vm.correcting
+                            ? 'Correction IA…'
+                            : 'Obtenir une correction Claude',
+                      ),
+                    ),
+                    if (vm.aiFeedback[q.id] case final feedback?) ...[
+                      const SizedBox(height: 8),
+                      Text(feedback, style: const TextStyle(height: 1.5)),
+                    ],
+                    if (vm.loadError != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        vm.loadError!,
+                        style: TextStyle(color: Colors.red.shade700),
+                      ),
+                    ],
                   ],
                 ],
               ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            alignment: WrapAlignment.spaceBetween,
+            children: [
+              OutlinedButton.icon(
+                onPressed: vm.index == 0 ? null : () => vm.goTo(vm.index - 1),
+                icon: const Icon(Icons.arrow_back),
+                label: const Text('Précédente'),
+              ),
+              if (vm.index < vm.questions.length - 1)
+                FilledButton.icon(
+                  onPressed: () {
+                    FocusScope.of(context).unfocus();
+                    vm.goTo(vm.index + 1);
+                  },
+                  icon: const Icon(Icons.arrow_forward),
+                  label: const Text('Suivante'),
+                ),
+              OutlinedButton.icon(
+                onPressed: _submit,
+                icon: const Icon(Icons.flag_outlined),
+                label: const Text('Terminer'),
+              ),
             ],
           ),
-        ),
-        const SizedBox(height: 20),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          alignment: WrapAlignment.spaceBetween,
-          children: [
-            OutlinedButton.icon(
-              onPressed: vm.index == 0 ? null : () => vm.goTo(vm.index - 1),
-              icon: const Icon(Icons.arrow_back),
-              label: const Text('Précédente'),
-            ),
-            if (vm.index < vm.questions.length - 1)
-              FilledButton.icon(
-                onPressed: () {
-                  FocusScope.of(context).unfocus();
-                  vm.goTo(vm.index + 1);
-                },
-                icon: const Icon(Icons.arrow_forward),
-                label: const Text('Suivante'),
-              ),
-            OutlinedButton.icon(
-              onPressed: _submit,
-              icon: const Icon(Icons.flag_outlined),
-              label: const Text('Terminer'),
-            ),
-          ],
-        ),
-      ],
+        ],
       ),
     );
   }

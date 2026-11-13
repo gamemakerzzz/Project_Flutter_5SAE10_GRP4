@@ -78,7 +78,7 @@ class AssessmentViewModel extends ChangeNotifier {
       }
       _begin(value, questions);
     } catch (error) {
-      loadError = error.toString();
+      loadError = error is FormatException ? error.message : error.toString();
       loading = false;
       notifyListeners();
     }
@@ -130,7 +130,8 @@ class AssessmentViewModel extends ChangeNotifier {
   }
 
   void reveal() {
-    if (stage != AssessmentStage.session || config.mode == AssessmentMode.exam) {
+    if (stage != AssessmentStage.session ||
+        config.mode == AssessmentMode.exam) {
       return;
     }
     if ((answers[current.id] ?? '').trim().isEmpty) return;
@@ -139,21 +140,25 @@ class AssessmentViewModel extends ChangeNotifier {
   }
 
   Future<void> requestAiCorrection() async {
-    if (stage != AssessmentStage.session || current.kind != QuestionKind.open) {
+    if (stage != AssessmentStage.session ||
+        config.mode == AssessmentMode.exam ||
+        correcting ||
+        current.kind != QuestionKind.open) {
       return;
     }
-    final answer = answers[current.id]?.trim() ?? '';
+    final question = current;
+    final answer = answers[question.id]?.trim() ?? '';
     if (answer.isEmpty) return;
     correcting = true;
     loadError = null;
     notifyListeners();
     try {
-      aiFeedback[current.id] = await _aiApi.correctOpenAnswer(
-        question: current,
+      aiFeedback[question.id] = await _aiApi.correctOpenAnswer(
+        question: question,
         answer: answer,
       );
     } catch (error) {
-      loadError = error.toString();
+      loadError = error is FormatException ? error.message : error.toString();
     } finally {
       correcting = false;
       notifyListeners();

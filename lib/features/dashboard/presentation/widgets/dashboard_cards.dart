@@ -60,7 +60,7 @@ class CourseProgressCard extends StatelessWidget {
                   color: color.withValues(alpha: .1),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(icons[course.symbol], color: color),
+                child: Icon(icons[course.symbol % icons.length], color: color),
               ),
               const SizedBox(width: 14),
               Expanded(

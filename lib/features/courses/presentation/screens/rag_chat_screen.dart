@@ -83,7 +83,7 @@ class _RagChatScreenState extends State<RagChatScreen> {
                       const SizedBox(height: 12),
                       DemoNote(
                         text: widget.repository.isLocal
-                            ? 'Evidence preview · AI generation is unavailable. Only exact, locally retrieved PDF passages are shown. Each question is searched independently.'
+                            ? 'Claude answers from selected course passages. Relevant text is sent to Anthropic. Check the cited pages; each question is answered independently.'
                             : 'Answers use this course’s PDF passages and run locally with Ollama. Each question is independent. Check the numbered sources; AI can make mistakes.',
                       ),
                       const SizedBox(height: 20),

@@ -63,7 +63,7 @@ class OpenTriviaRepository {
       options: options,
       correctIndex: options.indexOf(correct),
       expectedAnswer: correct,
-      explanation: 'Réponse issue d’Open Trivia DB. Une explication IA peut être ajoutée après configuration de la clé OpenAI.',
+      explanation: 'Réponse issue d’Open Trivia DB.',
     );
   }
 }

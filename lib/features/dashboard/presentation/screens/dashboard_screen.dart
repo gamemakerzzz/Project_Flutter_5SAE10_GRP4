@@ -13,11 +13,15 @@ class DashboardScreen extends StatelessWidget {
     required this.student,
     required this.onProfile,
     this.onCourses,
+    this.onQuiz,
+    this.onFlashcards,
     this.savedCourses,
   });
   final Student student;
   final VoidCallback onProfile;
   final VoidCallback? onCourses;
+  final VoidCallback? onQuiz;
+  final VoidCallback? onFlashcards;
   final List<Course>? savedCourses;
   @override
   Widget build(BuildContext context) {
@@ -232,9 +236,7 @@ class DashboardScreen extends StatelessWidget {
           children: [
             for (final action in [
               (Icons.auto_awesome, 'AI Tutor'),
-              (Icons.style_outlined, 'Flashcards'),
               (Icons.calendar_month_outlined, 'Study Planner'),
-              (Icons.quiz_outlined, 'Assessments'),
             ])
               ActionChip(
                 avatar: Icon(action.$1, size: 18),
@@ -242,6 +244,16 @@ class DashboardScreen extends StatelessWidget {
                 onPressed: () =>
                     openPage(context, ModulePlaceholder(action.$2)),
               ),
+            ActionChip(
+              avatar: const Icon(Icons.style_outlined, size: 18),
+              label: const Text('Flashcards'),
+              onPressed: onFlashcards,
+            ),
+            ActionChip(
+              avatar: const Icon(Icons.quiz_outlined, size: 18),
+              label: const Text('Quiz & Exams'),
+              onPressed: onQuiz,
+            ),
           ],
         ),
         SectionTitle(

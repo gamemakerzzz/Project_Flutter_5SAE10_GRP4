@@ -36,7 +36,7 @@ class AssessmentConfig {
   /// Extracted local course passages provided only for the current generation.
   final String courseContext;
 
-  Map<String, Object> toJson() => {
+  Map<String, Object?> toJson() => {
     'difficulty': difficulty.name,
     'mix': mix.name,
     'mode': mode.name,
