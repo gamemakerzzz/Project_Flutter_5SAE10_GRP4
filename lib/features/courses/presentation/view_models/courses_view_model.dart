@@ -119,6 +119,8 @@ class CoursesViewModel extends ChangeNotifier {
 
   Course? course(String id) => courses.where((c) => c.id == id).firstOrNull;
   List<CourseDocument> docs(String id) => documents[id] ?? [];
+  Future<List<SourcePassage>> quizSources(String courseId) =>
+      repository.quizSources(courseId);
   int get documentCount =>
       documents.values.fold(0, (count, list) => count + list.length);
   @override

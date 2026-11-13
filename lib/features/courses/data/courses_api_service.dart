@@ -275,6 +275,12 @@ class CoursesApiService implements CoursesRepository {
   }
 
   @override
+  Future<List<SourcePassage>> quizSources(String courseId) => search(
+    courseId,
+    'course concepts definitions objectives examples',
+  );
+
+  @override
   Future<RagAnswer> ask(String courseId, String question) async {
     await _ensureIndexed(courseId);
     final data = await _json('POST', '/api/rag/ask', {

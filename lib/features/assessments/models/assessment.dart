@@ -22,12 +22,19 @@ class AssessmentConfig {
     this.mode = AssessmentMode.practice,
     this.count = 5,
     this.minutes = 10,
+    this.courseId,
+    this.courseTitle,
+    this.courseContext = '',
   });
   final Difficulty difficulty;
   final QuestionMix mix;
   final AssessmentMode mode;
   final int count;
   final int minutes;
+  final String? courseId;
+  final String? courseTitle;
+  /// Extracted local course passages provided only for the current generation.
+  final String courseContext;
 
   Map<String, Object> toJson() => {
     'difficulty': difficulty.name,
@@ -35,6 +42,8 @@ class AssessmentConfig {
     'mode': mode.name,
     'count': count,
     'minutes': minutes,
+    'courseId': courseId,
+    'courseTitle': courseTitle,
   };
 
   factory AssessmentConfig.fromJson(Map<String, dynamic> json) =>
@@ -44,6 +53,8 @@ class AssessmentConfig {
         mode: AssessmentMode.values.byName(json['mode'] as String),
         count: json['count'] as int,
         minutes: json['minutes'] as int,
+        courseId: json['courseId'] as String?,
+        courseTitle: json['courseTitle'] as String?,
       );
 }
 

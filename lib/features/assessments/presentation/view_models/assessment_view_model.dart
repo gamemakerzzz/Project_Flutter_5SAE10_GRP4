@@ -73,7 +73,7 @@ class AssessmentViewModel extends ChangeNotifier {
           questions = await _openTriviaRepository.loadQuestions(value);
           break;
         case QuestionSource.gemini:
-          questions = await _aiApi.generateFlutterQuestions(value);
+          questions = await _aiApi.generateCourseQuestions(value);
           break;
       }
       _begin(value, questions);

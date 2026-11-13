@@ -31,7 +31,7 @@ class AiAssessmentApi {
   final http.Client _client;
   final AiApiConfig _config;
 
-  Future<List<Question>> generateFlutterQuestions(AssessmentConfig config) async {
+  Future<List<Question>> generateCourseQuestions(AssessmentConfig config) async {
     if (_config.geminiKey.isEmpty) {
       throw const QuizApiException(
         'Gemini n’est pas configuré. Lancez avec --dart-define=GEMINI_API_KEY=…',
@@ -42,8 +42,14 @@ class AiAssessmentApi {
       QuestionMix.open => 'questions ouvertes uniquement',
       QuestionMix.mixed => 'un mélange de QCM et questions ouvertes',
     };
-    final prompt = '''Génère ${config.count} questions en français sur Flutter et Dart, niveau ${config.difficulty.label}, sous forme de $type.
-Réponds uniquement avec un tableau JSON. Chaque objet doit contenir id, prompt, kind (multipleChoice ou open), options (liste vide pour open), correctIndex (null pour open), expectedAnswer, explanation et keywords (liste de mots clés pour open).''';
+    if (config.courseTitle == null || config.courseContext.trim().isEmpty) {
+      throw const QuizApiException('Sélectionnez un cours ayant du contenu importé avant de générer le quiz.');
+    }
+    final prompt = '''Génère ${config.count} questions en français basées uniquement sur les extraits du cours « ${config.courseTitle} », niveau ${config.difficulty.label}, sous forme de $type.
+N'invente aucune information absente des extraits. Réponds uniquement avec un tableau JSON. Chaque objet doit contenir id, prompt, kind (multipleChoice ou open), options (liste vide pour open), correctIndex (null pour open), expectedAnswer, explanation et keywords (liste de mots clés pour open).
+
+EXTRAITS DU COURS :
+${config.courseContext}''';
     final uri = Uri.https(
       'generativelanguage.googleapis.com',
       '/v1beta/models/${_config.geminiModel}:generateContent',
@@ -86,7 +92,7 @@ Réponds uniquement avec un tableau JSON. Chaque objet doit contenir id, prompt,
         'OpenAI n’est pas configuré. Lancez avec --dart-define=OPENAI_API_KEY=…',
       );
     }
-    final prompt = '''Tu es un correcteur pédagogique Flutter/Dart. Corrige brièvement en français.
+    final prompt = '''Tu es un correcteur pédagogique. Corrige brièvement en français.
 Question: ${question.prompt}
 Réponse attendue: ${question.expectedAnswer}
 Réponse étudiant: $answer

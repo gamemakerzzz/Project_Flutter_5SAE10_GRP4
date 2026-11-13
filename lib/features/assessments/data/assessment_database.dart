@@ -1,8 +1,8 @@
 import 'dart:convert';
 
-import 'package:path/path.dart' as path;
 import 'package:sqflite/sqflite.dart';
 
+import '../../../core/data/app_database.dart';
 import '../models/assessment.dart';
 
 abstract interface class AssessmentStore {
@@ -20,16 +20,20 @@ class AssessmentDatabase implements AssessmentStore {
 
   Future<Database> get _db async {
     if (_database != null) return _database!;
-    final activeFactory = factory ?? databaseFactory;
-    final databasesPath = await activeFactory.getDatabasesPath();
+    if (factory == null) {
+      _database = await AppDatabase.instance.database;
+      return _database!;
+    }
+    final activeFactory = factory!;
     _database = await activeFactory.openDatabase(
-      path.join(databasesPath, 'smart_learning_assessments.db'),
+      'smart_learning.db',
       options: OpenDatabaseOptions(
         version: 1,
         onCreate: (database, version) => database.execute('''
           CREATE TABLE attempts (
             id TEXT PRIMARY KEY,
             created_at TEXT NOT NULL,
+            course_id TEXT,
             score INTEGER NOT NULL,
             payload TEXT NOT NULL
           )
@@ -58,6 +62,7 @@ class AssessmentDatabase implements AssessmentStore {
     await database.insert('attempts', {
       'id': result.id,
       'created_at': result.date.toIso8601String(),
+      'course_id': result.config.courseId,
       'score': result.percentage,
       'payload': jsonEncode(result.toJson()),
     }, conflictAlgorithm: ConflictAlgorithm.replace);
@@ -65,7 +70,7 @@ class AssessmentDatabase implements AssessmentStore {
 
   @override
   Future<void> close() async {
-    await _database?.close();
+    if (factory != null) await _database?.close();
     _database = null;
   }
 }

@@ -1,7 +1,7 @@
 import '../features/courses/data/local_courses_repository.dart';
-import '../features/courses/data/courses_api_service.dart';
 import '../features/courses/presentation/view_models/courses_view_model.dart';
 import '../features/courses/presentation/screens/courses_screen.dart';
+import '../features/assessments/presentation/screens/assessments_screen.dart';
 
 import 'package:flutter/material.dart';
 
@@ -60,14 +60,8 @@ class StudentShell extends StatefulWidget {
 
 class _StudentShellState extends State<StudentShell> {
   int tab = 0;
-  late final courses = CoursesViewModel(
-    widget.session.isDemo
-        ? LocalCoursesRepository()
-        : CoursesApiService(
-            baseUri: widget.session.api.baseUri,
-            tokenProvider: () async => widget.session.api.token,
-          ),
-  );
+  // Courses and quizzes are intentionally local-first and share one SQLite DB.
+  late final courses = CoursesViewModel(LocalCoursesRepository());
   @override
   void initState() {
     super.initState();
@@ -97,13 +91,14 @@ class _StudentShellState extends State<StudentShell> {
               listenable: courses,
               builder: (context, _) => DashboardScreen(
                 student: widget.session.student!,
-                onProfile: () => setState(() => tab = 3),
+                onProfile: () => setState(() => tab = 4),
                 onCourses: () => setState(() => tab = 1),
-                savedCourses: widget.session.isDemo ? null : courses.courses,
+                savedCourses: courses.courses,
               ),
             ),
             1 => CoursesScreen(model: courses),
-            2 => const ModulePlaceholder('Study Planner', standalone: false),
+            2 => AssessmentsScreen(coursesModel: courses, embedded: true),
+            3 => const ModulePlaceholder('Study Planner', standalone: false),
             _ => ProfileScreen(session: widget.session),
           },
         ),
@@ -121,6 +116,11 @@ class _StudentShellState extends State<StudentShell> {
             icon: Icon(Icons.menu_book_outlined),
             selectedIcon: Icon(Icons.menu_book),
             label: 'Courses',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.quiz_outlined),
+            selectedIcon: Icon(Icons.quiz),
+            label: 'Quiz',
           ),
           NavigationDestination(
             icon: Icon(Icons.calendar_month_outlined),

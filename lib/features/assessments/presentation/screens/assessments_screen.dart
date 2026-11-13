@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../courses/models/course_models.dart';
+import '../../../courses/presentation/view_models/courses_view_model.dart';
 import '../../models/assessment.dart';
 import 'attempt_detail_screen.dart';
 import '../view_models/assessment_view_model.dart';
@@ -7,8 +9,11 @@ import '../widgets/assessment_widgets.dart';
 
 /// Feature entry point. Can be pushed as a route from the shared dashboard.
 class AssessmentsScreen extends StatefulWidget {
-  const AssessmentsScreen({super.key, this.viewModel});
+  const AssessmentsScreen({super.key, this.viewModel, this.coursesModel, this.embedded = false});
   final AssessmentViewModel? viewModel;
+  final CoursesViewModel? coursesModel;
+  /// Removes the feature app bar when displayed inside the shared tab shell.
+  final bool embedded;
   @override
   State<AssessmentsScreen> createState() => _AssessmentsScreenState();
 }
@@ -22,7 +27,8 @@ class _AssessmentsScreenState extends State<AssessmentsScreen>
   int count = 5;
   int minutes = 10;
   bool historyTab = false;
-  QuestionSource source = QuestionSource.local;
+  QuestionSource source = QuestionSource.gemini;
+  Course? selectedCourse;
   final _answerFormKey = GlobalKey<FormState>();
   late final Future<void> _historyFuture;
 
@@ -92,6 +98,36 @@ class _AssessmentsScreenState extends State<AssessmentsScreen>
     vm.reset();
   }
 
+  Future<void> _generate() async {
+    final course = selectedCourse;
+    final courses = widget.coursesModel;
+    if (course == null || courses == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Choisissez d’abord un cours.')));
+      return;
+    }
+    final passages = await courses.quizSources(course.id);
+    if (!mounted) return;
+    if (passages.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Importez et traitez un PDF, ou ajoutez une description au cours avant de générer le quiz.')));
+      return;
+    }
+    final contextText = passages.map((passage) => '[${passage.documentName}, page ${passage.page}] ${passage.excerpt}').join('\n\n');
+    FocusScope.of(context).unfocus();
+    await vm.startFromSource(
+      AssessmentConfig(
+        difficulty: difficulty,
+        mix: mix,
+        mode: mode,
+        count: count,
+        minutes: minutes,
+        courseId: course.id,
+        courseTitle: course.title,
+        courseContext: contextText.length > 18000 ? contextText.substring(0, 18000) : contextText,
+      ),
+      source,
+    );
+  }
+
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: vm,
@@ -102,7 +138,7 @@ class _AssessmentsScreenState extends State<AssessmentsScreen>
       },
       child: Scaffold(
         backgroundColor: assessmentBackground,
-        appBar: AppBar(
+        appBar: widget.embedded ? null : AppBar(
           backgroundColor: assessmentBackground,
           leading: vm.stage == AssessmentStage.setup
               ? null
@@ -193,8 +229,28 @@ class _AssessmentsScreenState extends State<AssessmentsScreen>
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 8),
-              const Text('Cours de démonstration : Flutter & Dart'),
+              const Text('Créez un quiz à partir d’un cours enregistré dans l’application.'),
               const SizedBox(height: 24),
+              ListenableBuilder(
+                listenable: widget.coursesModel ?? _NoopListenable(),
+                builder: (context, _) {
+                  final courses = widget.coursesModel?.courses ?? const <Course>[];
+                  if (selectedCourse != null && !courses.any((course) => course.id == selectedCourse!.id)) {
+                    selectedCourse = null;
+                  }
+                  return DropdownButtonFormField<Course>(
+                    value: selectedCourse,
+                    isExpanded: true,
+                    decoration: const InputDecoration(labelText: 'Cours source', border: OutlineInputBorder()),
+                    hint: const Text('Choisissez un cours importé'),
+                    items: [for (final course in courses) DropdownMenuItem(value: course, child: Text(course.title))],
+                    onChanged: courses.isEmpty ? null : (course) => setState(() => selectedCourse = course),
+                  );
+                },
+              ),
+              const SizedBox(height: 8),
+              const Text('Le quiz utilisera les passages PDF traités localement pour ce cours.', style: TextStyle(fontSize: 12)),
+              const SizedBox(height: 16),
               _dropdown<Difficulty>(
                 'Difficulté',
                 difficulty,
@@ -228,9 +284,9 @@ class _AssessmentsScreenState extends State<AssessmentsScreen>
                 source,
                 QuestionSource.values,
                 (value) => switch (value) {
-                  QuestionSource.local => 'Démonstration locale Flutter/Dart',
-                  QuestionSource.openTrivia => 'Open Trivia DB · API HTTP',
-                  QuestionSource.gemini => 'Gemini · IA HTTP',
+                  QuestionSource.local => 'Démonstration locale (hors contenu du cours)',
+                  QuestionSource.openTrivia => 'Open Trivia DB · API HTTP (hors contenu du cours)',
+                  QuestionSource.gemini => 'Gemini · IA depuis le cours sélectionné',
                 },
                 (value) => setState(() => source = value),
               ),
@@ -283,19 +339,7 @@ class _AssessmentsScreenState extends State<AssessmentsScreen>
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  onPressed: vm.loading ? null : () {
-                    FocusScope.of(context).unfocus();
-                    vm.startFromSource(
-                      AssessmentConfig(
-                        difficulty: difficulty,
-                        mix: mix,
-                        mode: mode,
-                        count: count,
-                        minutes: minutes,
-                      ),
-                      source,
-                    );
-                  },
+                  onPressed: vm.loading ? null : _generate,
                   icon: vm.loading
                     ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
                     : const Icon(Icons.auto_awesome),
@@ -314,7 +358,7 @@ class _AssessmentsScreenState extends State<AssessmentsScreen>
         ],
         const SizedBox(height: 16),
         const Text(
-          'Prototype d’interface : questions préécrites, correction simulée et historique conservé uniquement pendant cette ouverture du module.',
+          'Vos cours et votre historique restent sur cet appareil dans la base SQLite locale. Gemini reçoit uniquement les extraits nécessaires à la génération.',
           style: TextStyle(color: Color(0xFF526078), height: 1.5),
         ),
       ],
@@ -680,7 +724,7 @@ class _AssessmentsScreenState extends State<AssessmentsScreen>
             ),
             const SizedBox(height: 8),
             const Text(
-              'Historique de cette ouverture du module. Aucune donnée n’est sauvegardée sur un serveur.',
+              'Historique sauvegardé localement sur cet appareil. Aucune donnée n’est envoyée à un serveur de stockage.',
             ),
           ],
         ),
@@ -741,3 +785,5 @@ class _AssessmentsScreenState extends State<AssessmentsScreen>
     ],
   );
 }
+
+class _NoopListenable extends ChangeNotifier {}

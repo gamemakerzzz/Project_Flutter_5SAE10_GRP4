@@ -3,7 +3,7 @@
 ## Scope
 
 - Branch: `feature/quiz-exam`
-- Module: **AI Quiz & Exam Simulator** only.
+- Module: **AI Quiz & Exam Simulator**, integrated with the shared Courses/RAG work.
 - Keep `Quiz & Examens` as the in-app French heading.
 
 ## Product distinction
@@ -16,7 +16,7 @@ The app stays local-first and does not use a deployed backend yet:
 
 ```text
 Flutter/Dart
-|- SQFLite: attempts, answers, scores, local history
+|- One SQFLite database (`smart_learning.db`): courses, PDF bytes, extracted passages, attempts, answers and scores
 |- Open Trivia DB: live non-AI QCM fallback
 |- Gemini: direct question generation through HTTP
 `- OpenAI Responses: direct correction/explanation through HTTP
@@ -45,7 +45,9 @@ For convenience, `api_keys.json` is ignored by Git and `.vscode/launch.json` loa
 
 ## Current implementation
 
-The existing offline Flutter/Dart question bank remains the reliable fallback. New data-layer files provide SQLite persistence, Open Trivia DB requests, configurable Gemini generation, and OpenAI correction after an open answer is checked. `docs/quiz_exam_api_setup.md` contains run-time key instructions.
+The main app now keeps `Courses` and `Quiz` as separate bottom-navigation tabs. In the Quiz tab the student selects an uploaded course; Gemini receives its locally extracted PDF passages and generates the session from them. The selected course ID and title are saved with each attempt. Courses, documents, passages and attempt history share the same local SQLite file. The existing local/Open Trivia options remain visible as explicit non-course fallbacks.
+
+`lib/core/data/app_database.dart` owns the shared schema. `LocalCoursesRepository` persists the PDFs and passages instead of keeping a session-only memory map. `docs/quiz_exam_api_setup.md` contains run-time key instructions.
 
 Validation completed on 2026-11-12:
 

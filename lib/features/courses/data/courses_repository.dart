@@ -18,6 +18,7 @@ abstract class CoursesRepository {
   Future<void> deleteDocument(String documentId);
   Future<Uint8List> content(String documentId);
   Future<List<SourcePassage>> search(String courseId, String query);
+  Future<List<SourcePassage>> quizSources(String courseId);
   Future<RagAnswer> ask(String courseId, String question);
   void dispose() {}
 }
