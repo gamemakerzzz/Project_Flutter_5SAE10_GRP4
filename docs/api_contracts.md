@@ -1,5 +1,7 @@
 # API contracts
 
+Auth, profile, courses, documents, semantic search and local RAG are implemented. Core contracts are in [backend/README.md](../backend/README.md); indexing, semantic search and grounded answers are in [courses_rag.md](courses_rag.md). The checklist below remains relevant for future tutor, assessment, planner and flashcard integration.
+
 Agree on these contracts before implementing integrations. This file is a planning checklist, not an implemented API specification.
 
 ## Shared identifiers

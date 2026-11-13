@@ -58,3 +58,20 @@ app.*.map.json
 *.jks
 *.keystore
 
+
+# Local backend state and credentials
+backend/data/
+backend/storage/
+backend/.env
+backend/.dart_tool/
+backend/build/
+
+# Local database copies, signing secrets, and loose uploaded documents
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+**/jwt-secret.txt
+/*.pdf

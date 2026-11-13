@@ -1,0 +1,94 @@
+{
+  "date": "2026-11-12",
+  "backendProcessRestart": true,
+  "androidLogoutRestartLogin": "observed separately via adb",
+  "courseRestored": "AuditML",
+  "documentRestored": "studymate-audit-course.pdf",
+  "pdfSha256Matches": true,
+  "persistedVectors": 2,
+  "vectorDimensions": 768,
+  "studentBCourses": 0,
+  "sqliteIntegrity": "ok",
+  "checks": [
+    {
+      "method": "POST",
+      "path": "/api/auth/login",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/login",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/courses",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/courses/23c04198-d4c3-42f1-9da0-6e7e6c3f2be7/documents",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/courses",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/courses/23c04198-d4c3-42f1-9da0-6e7e6c3f2be7",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/courses/23c04198-d4c3-42f1-9da0-6e7e6c3f2be7/documents",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/courses/23c04198-d4c3-42f1-9da0-6e7e6c3f2be7/index",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/documents/7ce5bf8e-5a7a-4631-91c8-38b961adafef",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/documents/7ce5bf8e-5a7a-4631-91c8-38b961adafef/status",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/documents/7ce5bf8e-5a7a-4631-91c8-38b961adafef/content",
+      "status": 404
+    },
+    {
+      "method": "POST",
+      "path": "/api/courses/search",
+      "status": 404
+    },
+    {
+      "method": "POST",
+      "path": "/api/rag/ask",
+      "status": 404
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/documents/7ce5bf8e-5a7a-4631-91c8-38b961adafef",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/courses",
+      "status": 401
+    },
+    {
+      "method": "GET",
+      "path": "/api/documents/7ce5bf8e-5a7a-4631-91c8-38b961adafef/content",
+      "status": 200
+    }
+  ]
+}
