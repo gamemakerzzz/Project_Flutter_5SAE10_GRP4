@@ -59,3 +59,7 @@ Validation completed on 2026-11-12:
 `origin/feature/courses-rag` was merged into `feature/quiz-exam`. The merged app now includes the courses/RAG, auth, dashboard, and profile work alongside the quiz module. Dependency conflicts were resolved by retaining all required packages (`sqflite`, `path`, `file_picker`, `pdfrx`, and `flutter_secure_storage`) and all generated macOS plugin registrations.
 
 `flutter pub get` succeeds. A full Windows `flutter test --no-pub` currently stops before tests because `pdfium_dart` tries to compile a native PDF helper and the local Visual C++ hook command mishandles a path containing spaces (`C:\\Program Files ...`). This is an environment/native-toolchain issue introduced by the PDF dependency, not a Dart test failure; validate on Android after the emulator/device is ready.
+
+## Flashcards integration - 2026-11-13
+
+The `integration/courses-quiz-flashcards` branch merges the Flashcards & Spaced Repetition module into the same signed-in app. It is a separate bottom-navigation tab beside Courses and Quiz. Its decks, cards and scheduling state use the shared `smart_learning.db` database through `AppDatabase`; there is no second native SQLite file. The optional Flashcards Python service remains configurable through `FLASHCARDS_API_URL` and its documented backend environment values.

@@ -75,3 +75,9 @@ backend/build/
 *.sqlite3-*
 **/jwt-secret.txt
 /*.pdf
+
+# Local Flashcards service and Python virtual environment
+.venv/
+__pycache__/
+*.pyc
+*.log

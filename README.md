@@ -28,7 +28,7 @@ flutter run
 - `docs/`: architecture and API agreements.
 - `template_reference/`: source reference from Hash Studios; independent legacy Flutter app, not imported by the main app.
 
-Feature folders contain models, data, screens, widgets, and view models. Auth, profile and Smart Courses/RAG are implemented. The other learning modules remain placeholders.
+Feature folders contain models, data, screens, widgets, and view models. Auth, profile, Smart Courses/RAG, Quiz & Exams, and Flashcards are integrated in the shared tabbed application. The Planner and Tutor modules remain placeholders until their owners integrate them.
 
 ## Team workflow
 

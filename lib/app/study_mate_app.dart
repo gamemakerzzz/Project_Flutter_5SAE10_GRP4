@@ -2,6 +2,7 @@ import '../features/courses/data/local_courses_repository.dart';
 import '../features/courses/presentation/view_models/courses_view_model.dart';
 import '../features/courses/presentation/screens/courses_screen.dart';
 import '../features/assessments/presentation/screens/assessments_screen.dart';
+import '../features/flashcards/presentation/screens/flashcards_screen.dart';
 
 import 'package:flutter/material.dart';
 
@@ -91,14 +92,15 @@ class _StudentShellState extends State<StudentShell> {
               listenable: courses,
               builder: (context, _) => DashboardScreen(
                 student: widget.session.student!,
-                onProfile: () => setState(() => tab = 4),
+                onProfile: () => setState(() => tab = 5),
                 onCourses: () => setState(() => tab = 1),
                 savedCourses: courses.courses,
               ),
             ),
             1 => CoursesScreen(model: courses),
             2 => AssessmentsScreen(coursesModel: courses, embedded: true),
-            3 => const ModulePlaceholder('Study Planner', standalone: false),
+            3 => const FlashcardsScreen(),
+            4 => const ModulePlaceholder('Study Planner', standalone: false),
             _ => ProfileScreen(session: widget.session),
           },
         ),
@@ -121,6 +123,11 @@ class _StudentShellState extends State<StudentShell> {
             icon: Icon(Icons.quiz_outlined),
             selectedIcon: Icon(Icons.quiz),
             label: 'Quiz',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.style_outlined),
+            selectedIcon: Icon(Icons.style),
+            label: 'Flashcards',
           ),
           NavigationDestination(
             icon: Icon(Icons.calendar_month_outlined),
